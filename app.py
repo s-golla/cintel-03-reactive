@@ -39,14 +39,6 @@ with ui.sidebar(open="open"):
 
 # --- 3. Server Logic and Output Definitions ---
 
-@reactive.calc
-def filtered_data():
-    if not input.selected_species_list():
-        return penguins.head(0)
-        
-    df = penguins[penguins["species"].isin(input.selected_species_list())].copy()
-    return df
-
 # --- Data Tables and Grids ---
 with ui.layout_columns():
     with ui.card(full_screen=True):
@@ -123,3 +115,20 @@ with ui.layout_columns():
                 },
                 hover_data=["island", "bill_length_mm", "bill_depth_mm"],
             )
+
+# --------------------------------------------------------
+# Reactive calculations and effects
+# --------------------------------------------------------
+
+# Add a reactive calculation to filter the data
+# By decorating the function with @reactive, we can use the function to filter the data
+# The function will be called whenever an input functions used to generate that output changes.
+# Any output that depends on the reactive function (e.g., filtered_data()) will be updated when the data changes.
+
+@reactive.calc
+def filtered_data():
+    if not input.selected_species_list():
+        return penguins.head(0)
+        
+    df = penguins[penguins["species"].isin(input.selected_species_list())].copy()
+    return df
