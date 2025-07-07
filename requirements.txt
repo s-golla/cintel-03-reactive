@@ -1,3 +1,6 @@
-pandas
-plotly
+numpy
+seaborn
+matplotlib
 palmerpenguins
+plotly
+shinywidgets
