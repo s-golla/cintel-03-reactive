@@ -23,6 +23,14 @@ with ui.sidebar(open="open"):
         selected=["Adelie", "Gentoo", "Chinstrap"],
         inline=True,
     )
+    # New: Add an island filter
+    ui.input_checkbox_group(
+        "selected_island_list",
+        "Select Island",
+        choices=["Torgersen", "Biscoe", "Dream"],
+        selected=["Torgersen", "Biscoe", "Dream"],
+        inline=True,
+    )
     ui.hr()
     ui.h3("Histogram Options")
     ui.input_selectize(
@@ -35,7 +43,7 @@ with ui.sidebar(open="open"):
     ui.input_slider("seaborn_bin_count", "Seaborn Histogram Bins", 0, 100, 20)
 
     ui.hr()
-    ui.a("GitHub Repository", href="https://github.com/s-golla/cintel-02-data", target="_blank")
+    ui.a("GitHub Repository", href="https://github.com/s-golla/cintel-03-reactive", target="_blank")
 
 # --- 3. Server Logic and Output Definitions ---
 
@@ -64,7 +72,7 @@ with ui.layout_columns():
         def plotly_histogram():
             selected_attribute = input.selected_attribute()
             return px.histogram(
-                filtered_data(), # Data is already filtered by selected_species_list
+                filtered_data(), # Data is already filtered by selected_species_list and island
                 x=selected_attribute,
                 nbins=input.plotly_bin_count(),
                 title=f"Distribution of {selected_attribute} (Combined and Filtered)", # Updated title
@@ -72,11 +80,9 @@ with ui.layout_columns():
                 barmode="overlay", # Overlay bars for different species
                 opacity=0.7 # Add some opacity to see overlapping bars
             )
-            # Removed facet_col and facet_col_wrap to combine into one plot.
-            # Removed update_layout(showlegend=False) as legend is now useful.
 
     with ui.card(full_screen=True):
-        ui.card_header("Seaborn Histogram (Filtered by Species)")
+        ui.card_header("Seaborn Histogram (Filtered by Species and Island)") # Updated title
 
         @render_plot
         def seaborn_histogram():
@@ -98,7 +104,7 @@ with ui.layout_columns():
 
 
     with ui.card(full_screen=True):
-        ui.card_header("Plotly Scatterplot: Flipper Length vs Body Mass (Filtered by Species)")
+        ui.card_header("Plotly Scatterplot: Flipper Length vs Body Mass (Filtered by Species and Island)") # Updated title
 
         @render_plotly
         def plotly_scatterplot():
@@ -120,15 +126,24 @@ with ui.layout_columns():
 # Reactive calculations and effects
 # --------------------------------------------------------
 
-# Add a reactive calculation to filter the data
-# By decorating the function with @reactive, we can use the function to filter the data
-# The function will be called whenever an input functions used to generate that output changes.
-# Any output that depends on the reactive function (e.g., filtered_data()) will be updated when the data changes.
-
+# Modified reactive calculation to filter the data by species AND island
 @reactive.calc
 def filtered_data():
-    if not input.selected_species_list():
-        return penguins.head(0)
-        
-    df = penguins[penguins["species"].isin(input.selected_species_list())].copy()
+    df = penguins.copy()
+
+    # Filter by species
+    if input.selected_species_list():
+        df = df[df["species"].isin(input.selected_species_list())]
+    else:
+        return penguins.head(0) # Return empty if no species are selected
+
+    # Filter by island
+    if input.selected_island_list():
+        df = df[df["island"].isin(input.selected_island_list())]
+    else:
+        # If no islands are selected, should we show nothing or all species for selected islands?
+        # For this example, we'll return an empty DataFrame if no islands are selected.
+        return penguins.head(0) # Return empty if no islands are selected
+
+
     return df
